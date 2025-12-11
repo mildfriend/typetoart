@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Type to Art</title>
+
+  <!-- p5.js -->
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.min.js"></script>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" />
+
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg-main: #FFF3D9;
+      --panel: #ffd8e8;
+      --canvas-bg: #ffd8e8;
+      --line: #ffb7cf;
+      --text-main: #ff6f9c;
+      --text-dark: #363636;
+      --muted: #aa8d9a;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #FFF3D9;
+      font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #app-root {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFF3D9;
+    }
+    .screen-frame {
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg-main);
+      overflow: hidden;
+      position: relative;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .hidden { display: none !important; }
+
+    /* 1) 시작 화면 */
+    #screen-start {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-main);
+    }
+
+    /* NEW START SCREEN DESIGN */
+    .start-logo {
+      position: absolute;
+      top: 130px;
+      left: 50%;
+      transform: translate(-50%);
+      z-index: 2;
+    }
+
+    .start-logo img {
+      display: block;
+      width: 1020px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .start-cta {
+      position: absolute;
+      bottom: 105px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 5;
+    }
+
+    .start-sub {
+      font-family: "Arial Black", Arial, sans-serif;
+      font-size: 12px;
+      color: #FF95B5;
+      margin-bottom: 10px;
+    }
+
+    .start-button {
+      border-radius: 40px;
+      border: none;
+      background: #FF95B5;
+      color: #FFF3D9;
+      font-family: "Arial Black", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 32px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #e87fa4;
+    }
+   
+    .start-button:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #e35b83;
+    }
+
+    /* 2) 메인 화면(위에 튜토리얼 오버레이가 겹침) */
+    #screen-main {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding: 36px 44px;
+      background: var(--bg-main) url("1BASE.png") center center / cover no-repeat;
+    }
+
+    /* 위쪽 줄 (탭 + 오른쪽 아이콘들) */
+    .top-row {
+      display: grid;
+      grid-template-columns: 1.5fr 1.5fr 1.5fr 0.7fr;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .tab-bar {
+      height: 40px;
+      border-radius: 10px;
+      border: 2px solid #ffd1e3;
+      background: #ffe5f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    #recent-artworks {
+      display: flex;
+      gap: 4px;
+      padding: 4px 8px;
+      overflow: hidden;
+    }
+    .artchip {
+      flex: 1;
+      min-width: 0;
+      border-radius: 8px;
+      border: 1px solid #ffc6dd;
+      padding: 4px 6px;
+      font-size: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: #ffeef6;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .icon-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+    }
+    .round-icon-btn {
+      width: 48px;
+      height: 48px;
+      border: none;
+      background: transparent;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .round-icon-btn img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* 중간: 왼쪽 텍스트 영역 + 오른쪽 캔버스 */
+    .main-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 2fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .left-panel {
+      border-radius: 24px;
+      background: #ffe4ef;
+      padding: 18px 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .left-title {
+      font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 18pt;
+      font-weight: 700;
+      color: #ff95b5;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .left-lines {
+      flex: 1;
+      border-radius: 24px;
+      background: #ffe4ef;
+      padding: 24px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .left-lines::before {
+      content: "";
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 52px;
+      bottom: 16px;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        #ff5668 0px,
+        #ff5668 1px,
+        transparent 2px,
+        transparent 35px
+      );
+      pointer-events: none;
+    }
+
+    /* 텍스트 입력 영역 */
+    #input-bar {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      border: none;
+      padding: 60px 32px 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      background: transparent;
+      font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      color: #444;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* 실제 내용(span) – 줄과 맞추기 위한 line-height */
+    #input-text {
+      display: none;
+      width: 100%;
+      line-height: 35px;
+    }
+
+    /* 깜빡이는 커서 span */
+    .typing-caret {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      margin-left: 2px;
+      background: #ff95b5;
+      vertical-align: baseline;
+      animation: caretBlink 1s steps(2, start) infinite;
+      visibility: hidden;
+    }
+
+    /* input-bar 에 show-caret 클래스가 붙을 때만 커서 보이게 */
+    #input-bar.show-caret .typing-caret {
+      visibility: visible;
+    }
+
+    /* 캐럿 깜빡임 애니메이션 */
+    @keyframes caretBlink {
+      0%, 50% {
+        opacity: 1;
+      }
+      50.01%, 100% {
+        opacity: 0;
+      }
+    }
+
+    #input-bar.has-text .input-placeholder { display: none; }
+    #input-bar.has-text .input-text { display: block; }
+
+    .input-placeholder {
+      color: #bfa1ae;
+      pointer-events: none;
+      font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 400;
+    }
+    
+    .input-text {
+      display: none;
+      width: 100%;
+    }
+    .left-note {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .canvas-shell {
+      border-radius: 18px;
+      border: 2px solid #ffd1e3;
+      background: var(--canvas-bg);
+      padding: 10px;
+    }
+    #p5-container {
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--canvas-bg);
+    }
+
+    /* 튜토리얼 오버레이 */
+    #tutorial-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,243,217,0.5);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 20px;
+      z-index: 20;
+      font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 300;
+    }
+
+    .tutorial-header {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+    .tutorial-close {
+      margin-left: 8px;
+      border: none;
+      background: transparent;
+      font-size: 18px;
+      cursor: pointer;
+      color: #ff6f9c;
+    }
+    .tutorial-body {
+      flex: 1;
+      border-radius: 0;
+      border: none;
+      background: transparent;
+      position: relative;
+      padding: 0 16px;
+      font-size: 13px;
+      color: var(--text-dark);
+    }
+
+    .t-label {
+      position: absolute;
+      max-width: 250px;
+      line-height: 1.4;
+    }
+    .t-left-main { left: 140px; top: 110px; }
+    .t-left-main h4 { margin: 0 0 4px; color: #ff6f9c; font-size: 13px; }
+    .t-top-middle { top: 30px; left: 605px; transform: translateX(-50%); text-align: center; }
+    .t-top-right { top: 35px; right: 40px; text-align: right; }
+    .t-center { top: 50%; left: 1000px; transform: translate(-50%, -50%); text-align: center; }
+    .tutorial-footer {
+      text-align: right;
+      margin-top: 8px;
+    }
+    .tutorial-ok {
+      border-radius: 20px;
+      border: none;
+      background: #ff6f9c;
+      color: #fff;
+      font-size: 12px;
+      padding: 6px 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 #e35b83;
+    }
+
+    /* -------------------- GALLERY MODAL -------------------- */
+
+    #gallery-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .gallery-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 216, 232, 0.75);
+      backdrop-filter: blur(4px);
+    }
+
+    .gallery-window {
+      position: relative;
+      width: 480px;
+      max-height: 70vh;
+      background: #ffe5f0;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 6px 0 #e3a8c5;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .gallery-title {
+      font-family: "DM Sans";
+      font-weight: 700;
+      font-size: 22px;
+      color: #ff6f9c;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .gallery-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .gallery-item {
+      background: #ffeff7;
+      border: 1.5px solid #ffc6dd;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: "DM Sans";
+      font-size: 14px;
+      color: #363636;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .gallery-item:hover {
+      background: #ffd8e8;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 0 #e3a8c5;
+    }
+
+    .gallery-close {
+      margin-top: 16px;
+      align-self: center;
+      border: none;
+      border-radius: 20px;
+      background: #ff95b5;
+      padding: 8px 20px;
+      font-family: "DM Sans";
+      font-size: 14px;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #e35b83;
+    }
+
+    .gallery-close:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #e35b83;
+    }
+
+  </style>
+</head>
+
+<body>
+<div id="app-root">
+  <div class="screen-frame">
+
+    <!-- 1) 시작 화면 -->
+    <section id="screen-start">
+      <div class="start-logo">
+        <img src="0TYPETOART.png" alt="Type to Art logo">
+      </div>
+
+      <div class="start-cta">
+        <div class="start-sub">Click here to start</div>
+        <button id="btn-start" class="start-button">LET'S TYPE!</button>
+      </div>
+    </section>
+  
+    <!-- 2) 메인 화면 (튜토리얼/앱 포함) -->
+    <section id="screen-main" class="hidden">
+      <div class="top-row">
+        <!-- 최근 문장 3개가 들어갈 박스들 -->
+        <button class="tab-bar" id="recent-slot-1"></button>
+        <button class="tab-bar" id="recent-slot-2"></button>
+        <button class="tab-bar" id="recent-slot-3"></button>
+
+        <!-- 오른쪽 아이콘 영역 -->
+        <div class="icon-row">
+          <button id="gallery-button" class="round-icon-btn" type="button">
+            <img src="2ICON.png" alt="Library" />
+          </button>
+          <button id="tutorial-button" class="round-icon-btn" type="button">
+            <img src="3ICON.png" alt="Information" />
+          </button>
+        </div>
+      </div>
+
+      <div class="main-row">
+        <aside class="left-panel">
+          <div class="left-title">Type your life vision</div>
+          <div class="left-lines">
+            <div id="input-bar">
+              <span class="input-placeholder"></span>
+              <span id="input-text" class="input-text"></span>
+              <span id="typing-caret" class="typing-caret"></span>
+            </div>
+          </div>
+        </aside>
+
+        <div class="canvas-shell">
+          <div id="p5-container"></div>
+        </div>
+      </div>
+
+      <!-- 튜토리얼 오버레이 -->
+      <div id="tutorial-overlay">
+        <div class="tutorial-header">
+          You can open this tutorial again with the info button.
+          <button id="tutorial-close-top" class="tutorial-close">×</button>
+        </div>
+        <div class="tutorial-body">
+          <div class="t-label t-left-main">
+            <h4>Type your life vision</h4>
+            <div>
+              Type your life vision here.<br />
+              On this website, Backspace is disabled.
+            </div>
+          </div>
+
+          <div class="t-label t-top-middle">
+            You can see other people’s recent answers here.
+          </div>
+
+          <div class="t-label t-top-right">
+            You can see all past answers in the library.
+          </div>
+
+          <div class="t-label t-center">
+            After you type your sentence, you will see the artwork appear here.<br />
+            When you press Enter, the artwork will be saved in the library.
+          </div>
+        </div>
+        <div class="tutorial-footer">
+          <button id="tutorial-ok" class="tutorial-ok">Got it!</button>
+        </div>
+      </div>
+
+      <!-- 갤러리 모달 -->
+      <div id="gallery-modal" class="hidden">
+        <div class="gallery-backdrop"></div>
+        <div class="gallery-window">
+          <div class="gallery-title">My Library</div>
+          <div class="gallery-list" id="gallery-list"></div>
+          <button id="gallery-close" class="gallery-close">Close</button>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+</div>
+
+<script>
+  /********** 화면 전환 **********/
+  const screenStart = document.getElementById("screen-start");
+  const screenMain = document.getElementById("screen-main");
+  const btnStart = document.getElementById("btn-start");
+
+  const tutorialOverlay = document.getElementById("tutorial-overlay");
+  const tutorialButton = document.getElementById("tutorial-button");
+  const tutorialCloseTop = document.getElementById("tutorial-close-top");
+  const tutorialOk = document.getElementById("tutorial-ok");
+
+  btnStart.addEventListener("click", () => {
+    screenStart.classList.add("hidden");
+    screenMain.classList.remove("hidden");
+
+    const container = document.getElementById("p5-container");
+    const b = container.getBoundingClientRect();
+
+    if (typeof resizeCanvas === "function") {
+      resizeCanvas(b.width, b.height);
+      background(255, 216, 232);
+      if (currentShapes && currentShapes.length > 0) {
+        drawArtwork(currentShapes);
+      }
+    }
+  });
+
+  function openTutorial() {
+    tutorialOverlay.classList.remove("hidden");
+  }
+  function closeTutorial() {
+    tutorialOverlay.classList.add("hidden");
+  }
+
+  tutorialButton.addEventListener("click", openTutorial);
+  tutorialCloseTop.addEventListener("click", closeTutorial);
+  tutorialOk.addEventListener("click", closeTutorial);
+
+  /********** p5 / 타이핑 로직 **********/
+  const DOT_COUNT = 15;
+  const LINE_COUNT = 17;
+  const PLANE_COUNT = 11;
+  const STORAGE_KEY = "typing-abstract-artworks";
+
+  let dotImages = [];
+  let lineImages = [];
+  let planeImages = [];
+
+  let currentText = "";
+  let currentShapes = [];
+  let artworks = [];
+  let wordsShapedCount = 0;   // 지금까지 그림으로 만든 단어 개수
+
+  const inputBarEl = document.getElementById("input-bar");
+  const inputTextEl = document.getElementById("input-text");
+  const recentSlot1 = document.getElementById("recent-slot-1");
+  const recentSlot2 = document.getElementById("recent-slot-2");
+  const recentSlot3 = document.getElementById("recent-slot-3");
+  const recentSlots = [recentSlot1, recentSlot2, recentSlot3];
+
+  const galleryButtonEl = document.getElementById("gallery-button");
+
+  // 타이핑 영역 클릭 시 커서 보이도록
+  inputBarEl.addEventListener("click", () => {
+    inputBarEl.classList.add("show-caret");
+  });
+
+  /* 갤러리 모달 요소 */
+  const galleryModal = document.getElementById("gallery-modal");
+  const galleryList = document.getElementById("gallery-list");
+  const galleryClose = document.getElementById("gallery-close");
+
+  /* 갤러리 열기 */
+  galleryButtonEl.addEventListener("click", () => {
+    if (artworks.length === 0) {
+      alert("No saved works yet.");
+      return;
+    }
+
+    galleryList.innerHTML = "";
+
+    const reversed = artworks.slice().reverse();
+
+    reversed.forEach((art, idx) => {
+      const div = document.createElement("div");
+      div.className = "gallery-item";
+      div.textContent = `${formatTimestamp(art.timestamp)} — ${art.text}`;
+
+      div.onclick = () => {
+        const realIndex = artworks.length - 1 - idx;
+        loadArtworkToCanvas(realIndex);
+        galleryModal.classList.add("hidden");
+      };
+
+      galleryList.appendChild(div);
+    });
+
+    galleryModal.classList.remove("hidden");
+  });
+
+  /* 갤러리 닫기 */
+  if (galleryClose) {
+    galleryClose.addEventListener("click", () => {
+      galleryModal.classList.add("hidden");
+    });
+  }
+
+  function updateInputDisplay() {
+    if (!currentText) {
+      inputBarEl.classList.remove("has-text");
+      inputTextEl.textContent = "";
+    } else {
+      inputBarEl.classList.add("has-text");
+      inputTextEl.textContent = currentText;
+    }
+  }
+
+  function formatTimestamp(ts) {
+    return new Date(ts).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function rebuildRecentArtworks() {
+    recentSlots.forEach((slot) => {
+      if (!slot) return;
+      slot.textContent = "";
+      slot.onclick = null;
+    });
+
+    if (artworks.length === 0) {
+      return;
+    }
+
+    const recent = artworks.slice(-3).reverse();
+
+    recent.forEach((artwork, idx) => {
+      const slot = recentSlots[idx];
+      if (!slot) return;
+
+      const label = artwork.text || "";
+      slot.textContent = label;
+
+      slot.onclick = () => {
+        const realIndex = artworks.length - 1 - idx;
+        loadArtworkToCanvas(realIndex);
+      };
+    });
+  }
+
+  function saveArtworksToStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(artworks));
+    } catch (e) {
+      console.error("localStorage save failed:", e);
+    }
+  }
+
+  function loadArtworksFromStorage() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      artworks = saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("localStorage load failed:", e);
+      artworks = [];
+    }
+  }
+
+  function countSyllables(word) {
+    if (!word) return 1;
+    const vowels = "aeiouAEIOU";
+    let inVowel = false;
+    let groups = 0;
+    for (let ch of word) {
+      if (vowels.indexOf(ch) !== -1) {
+        if (!inVowel) { groups++; inVowel = true; }
+      } else inVowel = false;
+    }
+    if (groups === 0) groups = 1;
+    return Math.min(groups, 3);
+  }
+
+  function createShapeForWord(word) {
+    if (!word) return null;
+
+    const syl = countSyllables(word);
+    let type, imgArray;
+    if (syl === 1) { type = "dot";  imgArray = dotImages; }
+    else if (syl === 2) { type = "line"; imgArray = lineImages; }
+    else { type = "plane"; imgArray = planeImages; }
+
+    if (!imgArray || imgArray.length === 0) return null;
+
+    const w = (typeof width === "number" && width > 0) ? width : 800;
+    const h = (typeof height === "number" && height > 0) ? height : 600;
+
+    const assetIndex = Math.floor(random(imgArray.length));
+    const x = random(w * 0.05, w * 0.95);
+    const y = random(h * 0.05, h * 0.95);
+
+    return { type, x, y, assetIndex };
+  }
+
+  function textToShapes(text) {
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    const shapes = [];
+    const w = (typeof width === "number" && width > 0) ? width : 800;
+    const h = (typeof height === "number" && height > 0) ? height : 600;
+
+    for (let word of words) {
+      const syl = countSyllables(word);
+      let type, imgArray;
+      if (syl === 1) { type = "dot"; imgArray = dotImages; }
+      else if (syl === 2) { type = "line"; imgArray = lineImages; }
+      else { type = "plane"; imgArray = planeImages; }
+
+      if (!imgArray || imgArray.length === 0) continue;
+
+      const assetIndex = Math.floor(random(imgArray.length));
+      const x = random(w * 0.05, w * 0.95);
+      const y = random(h * 0.05, h * 0.95);
+
+      shapes.push({ type, x, y, assetIndex });
+    }
+    return shapes;
+  }
+
+  function finalizeCurrentSentence() {
+    const textToSave = currentText.trim();
+    currentText = "";
+    updateInputDisplay();
+    if (!textToSave) return;
+
+    const words = textToSave.split(/\s+/).filter(Boolean);
+
+    for (let i = wordsShapedCount; i < words.length; i++) {
+      const shape = createShapeForWord(words[i]);
+      if (shape) currentShapes.push(shape);
+    }
+
+    const artworkShapes = currentShapes.slice();
+    const artwork = { text: textToSave, shapes: artworkShapes, timestamp: Date.now() };
+    artworks.push(artwork);
+    saveArtworksToStorage();
+    rebuildRecentArtworks();
+
+    drawArtwork(currentShapes);
+
+    currentShapes = [];
+    wordsShapedCount = 0;
+  }
+
+  function loadArtworkToCanvas(index) {
+    const artwork = artworks[index];
+    if (!artwork) return;
+    currentText = artwork.text || "";
+    currentShapes = artwork.shapes || [];
+    updateInputDisplay();
+    drawArtwork(currentShapes);
+  }
+
+  /********** p5.js **********/
+  function preload() {
+    for (let i = 1; i <= DOT_COUNT; i++) {
+      dotImages.push(loadImage(`DOT${i}.png`));
+    }
+    for (let i = 1; i <= LINE_COUNT; i++) {
+      lineImages.push(loadImage(`LINE${i}.png`));
+    }
+    for (let i = 1; i <= PLANE_COUNT; i++) {
+      planeImages.push(loadImage(`PLANE${i}.png`));
+    }
+  }
+
+  function setup() {
+    const container = document.getElementById("p5-container");
+    const bounds = container.getBoundingClientRect();
+    const canvas = createCanvas(bounds.width, bounds.height);
+    canvas.parent("p5-container");
+
+    imageMode(CENTER);
+    noStroke();
+    background(255, 216, 232);
+
+    loadArtworksFromStorage();
+    rebuildRecentArtworks();
+    updateInputDisplay();
+
+    window.addEventListener("resize", () => {
+      const b = container.getBoundingClientRect();
+      resizeCanvas(b.width, b.height);
+      background(255, 216, 232);
+      if (currentShapes && currentShapes.length > 0) {
+        drawArtwork(currentShapes);
+      }
+    });
+  }
+
+  function draw() {}
+
+  function drawArtwork(shapes) {
+    background(255, 216, 232);
+    if (!shapes) return;
+
+    for (let s of shapes) {
+      let imgArray;
+      if (s.type === "dot") imgArray = dotImages;
+      else if (s.type === "line") imgArray = lineImages;
+      else if (s.type === "plane") imgArray = planeImages;
+      if (!imgArray || imgArray.length === 0) continue;
+      const img = imgArray[s.assetIndex];
+      if (!img) continue;
+
+      if (s.type === "dot") {
+        image(img, s.x, s.y);
+      } else {
+        const scale = 0.4;
+        image(img, s.x, s.y, img.width * scale, img.height * scale);
+      }
+    }
+  }
+
+  /********** 키보드 입력 **********/
+  function handleKeyDown(e) {
+    inputBarEl.classList.add("show-caret");
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      finalizeCurrentSentence();
+      return;
+    }
+
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      return;
+    }
+
+    if (e.key.length > 1 && e.key !== " ") return;
+
+    if (e.key === " ") {
+      const trimmed = currentText.trim();
+      if (trimmed) {
+        const words = trimmed.split(/\s+/);
+        const lastWord = words[words.length - 1];
+        const shape = createShapeForWord(lastWord);
+        if (shape) {
+          currentShapes.push(shape);
+          drawArtwork(currentShapes);
+          wordsShapedCount = words.length;
+        }
+      }
+    }
+
+    currentText += e.key;
+    updateInputDisplay();
+    e.preventDefault();
+  }
+
+  window.addEventListener("keydown", handleKeyDown);
+
+</script>
+</body>
+</html>
